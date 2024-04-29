@@ -1,0 +1,17 @@
+
+*.pyc
+__pycache__/
+myenv/
+
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media
+staticfiles
+
+
+.idea/
+*.iml
+*.ipr
+*.iws
