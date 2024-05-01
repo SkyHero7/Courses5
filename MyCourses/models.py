@@ -6,9 +6,8 @@ from django.conf import settings
 from django.utils import timezone
 import smtplib
 
-
 class Client(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     email = models.EmailField()
     full_name = models.CharField(max_length=100)
     comment = models.TextField()
@@ -17,7 +16,7 @@ class Client(models.Model):
         return self.full_name
 
 class Mailing(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     SEND_CHOICES = [
         ('daily', 'Раз в день'),
         ('weekly', 'Раз в неделю'),
@@ -38,7 +37,7 @@ class Mailing(models.Model):
             raise ValidationError("Дата и время отправки должны быть в будущем")
 
 class Message(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     subject = models.CharField(max_length=200)
     body = models.TextField()
 
@@ -61,14 +60,13 @@ class SendingAttempt(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            server_response = send_mail(
+            self.server_response = send_mail(
                 self.mailing.message.subject,
                 self.mailing.message.body,
                 settings.EMAIL_HOST_USER,
                 [client.email for client in self.mailing.clients.all()],
                 fail_silently=False
             )
-            self.server_response = server_response
             self.status = 'success'
         except smtplib.SMTPException as e:
             self.server_response = str(e)

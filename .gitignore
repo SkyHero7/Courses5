@@ -2,6 +2,7 @@
 *.pyc
 __pycache__/
 myenv/
+.env
 
 *.log
 *.pot
