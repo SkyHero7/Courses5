@@ -75,3 +75,4 @@ def edit_mailing(request, pk):
     else:
         form = MailingForm(instance=mailing)
     return render(request, 'MyCourses/mailing_edit.html', {'form': form})
+

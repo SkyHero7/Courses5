@@ -86,3 +86,4 @@ class Course(models.Model):
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     is_verified = models.BooleanField(default=False)
+
