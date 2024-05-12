@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'MyCourses',
-    'new_users'
+    'new_users',
+    'django_apscheduler',
 
 ]
 
@@ -141,4 +142,4 @@ EMAIL_HOST_USER = 'fuckup@oscarbot.ru'
 EMAIL_HOST_PASSWORD = 'AsTSNVv7pun9'
 EMAIL_USE_SSL = True
 
-AUTH_USER_MODEL = 'MyCourses.CustomUser'
+AUTH_USER_MODEL = 'new_users.CustomUser'

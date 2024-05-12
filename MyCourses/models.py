@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.conf import settings
 from django.utils import timezone
 import smtplib
@@ -20,14 +20,17 @@ class Mailing(models.Model):
     SEND_CHOICES = [
         ('daily', 'Раз в день'),
         ('weekly', 'Раз в неделю'),
-        ('monthly', 'Раз в месяц')
+        ('monthly', 'Раз в месяц'),
     ]
 
     send_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+    next_send_datetime = models.DateTimeField()
     frequency = models.CharField(max_length=20, choices=SEND_CHOICES)
     status = models.CharField(max_length=20)
     message = models.ForeignKey('Message', on_delete=models.CASCADE)
     clients = models.ManyToManyField(Client, related_name='mailings')
+    end_datetime = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.message.subject} - {self.send_datetime}"
@@ -58,20 +61,6 @@ class SendingAttempt(models.Model):
     def __str__(self):
         return f"{self.status} - {self.send_datetime}"
 
-    def save(self, *args, **kwargs):
-        try:
-            self.server_response = send_mail(
-                self.mailing.message.subject,
-                self.mailing.message.body,
-                settings.EMAIL_HOST_USER,
-                [client.email for client in self.mailing.clients.all()],
-                fail_silently=False
-            )
-            self.status = 'success'
-        except smtplib.SMTPException as e:
-            self.server_response = str(e)
-            self.status = 'failure'
-        super().save(*args, **kwargs)
 
 class Course(models.Model):
     title = models.CharField(max_length=100)
@@ -83,7 +72,4 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
-class CustomUser(AbstractUser):
-    email = models.EmailField(unique=True)
-    is_verified = models.BooleanField(default=False)
 
