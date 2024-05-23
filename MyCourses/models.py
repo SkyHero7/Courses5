@@ -47,20 +47,6 @@ class Message(models.Model):
     def __str__(self):
         return self.subject
 
-class SendingAttempt(models.Model):
-    STATUS_CHOICES = [
-        ('success', 'Успешно'),
-        ('failure', 'Не успешно')
-    ]
-
-    send_datetime = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    server_response = models.TextField()
-    mailing = models.ForeignKey(Mailing, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.status} - {self.send_datetime}"
-
 
 class Course(models.Model):
     title = models.CharField(max_length=100)
@@ -72,4 +58,55 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+class MailingSrv(models.Model):
+    """
+    Модель для хранения информации о рассылках.
+    """
 
+    AT_ONCE = 'один раз'
+    BY_DAY = 'раз в день'
+    BY_WEEK = 'раз в неделю'
+    BY_MONTH = 'раз в месяц'
+
+    FREQUENCY = [
+        (AT_ONCE, 'один раз'),
+        (BY_DAY, 'раз в день'),
+        (BY_WEEK, 'раз в неделю'),
+        (BY_MONTH, 'раз в месяц')
+    ]
+
+    CREATED = 'создана'
+    PROCESSING = 'запущена'
+    FINISHED = 'завершена'
+
+    STATUS = [
+        (CREATED, 'создана'),
+        (PROCESSING, 'запущена'),
+        (FINISHED, 'завершена')
+    ]
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='пользователь', null=True, blank=True)
+    recipients = models.ManyToManyField(Client, verbose_name='получатели рассылки')
+    start = models.DateTimeField(default=timezone.now, verbose_name='время начала рассылки')
+    next = models.DateTimeField(default=timezone.now, verbose_name='время следующей рассылки')
+    finish = models.DateTimeField(verbose_name='время завершения рассылки')
+    status = models.CharField(max_length=100, choices=STATUS, default=CREATED, verbose_name='статус рассылки')
+    frequency = models.CharField(max_length=50, choices=FREQUENCY, verbose_name='периодичность рассылки')
+    is_activated = models.BooleanField(default=True, verbose_name='метка активности')
+
+    def __str__(self):
+        return f'Рассылка_{self.pk}: {self.frequency} - {self.status}'
+
+class SendingAttempt(models.Model):
+    STATUS_CHOICES = [
+        ('success', 'Успешно'),
+        ('failure', 'Не успешно')
+    ]
+    mailing = models.ForeignKey(MailingSrv, on_delete=models.CASCADE, verbose_name='рассылка')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='клиент')
+    status = models.CharField(max_length=100, verbose_name='статус')
+    server_response = models.TextField(blank=True, null=True, verbose_name='ответ сервера')
+    timestamp = models.DateTimeField(default=timezone.now, verbose_name='время отправки')
+
+    def __str__(self):
+        return f"{self.status} - {self.send_datetime}"
