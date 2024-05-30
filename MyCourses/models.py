@@ -59,10 +59,6 @@ class Course(models.Model):
         return self.title
 
 class MailingSrv(models.Model):
-    """
-    Модель для хранения информации о рассылках.
-    """
-
     AT_ONCE = 'один раз'
     BY_DAY = 'раз в день'
     BY_WEEK = 'раз в неделю'
@@ -85,14 +81,50 @@ class MailingSrv(models.Model):
         (FINISHED, 'завершена')
     ]
 
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='пользователь', null=True, blank=True)
-    recipients = models.ManyToManyField(Client, verbose_name='получатели рассылки')
-    start = models.DateTimeField(default=timezone.now, verbose_name='время начала рассылки')
-    next = models.DateTimeField(default=timezone.now, verbose_name='время следующей рассылки')
-    finish = models.DateTimeField(verbose_name='время завершения рассылки')
-    status = models.CharField(max_length=100, choices=STATUS, default=CREATED, verbose_name='статус рассылки')
-    frequency = models.CharField(max_length=50, choices=FREQUENCY, verbose_name='периодичность рассылки')
-    is_activated = models.BooleanField(default=True, verbose_name='метка активности')
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name='пользователь',
+        null=True,
+        blank=True
+    )
+    recipients = models.ManyToManyField(
+        Client,
+        verbose_name='получатели рассылки'
+    )
+    mail = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        verbose_name='письмо',
+        null=True,
+        blank=True
+    )
+    start = models.DateTimeField(
+        default=timezone.now,
+        verbose_name='время начала рассылки'
+    )
+    next = models.DateTimeField(
+        default=timezone.now,
+        verbose_name='время следующей рассылки'
+    )
+    finish = models.DateTimeField(
+        verbose_name='время завершения рассылки'
+    )
+    status = models.CharField(
+        max_length=100,
+        choices=STATUS,
+        default=CREATED,
+        verbose_name='статус рассылки'
+    )
+    frequency = models.CharField(
+        max_length=50,
+        choices=FREQUENCY,
+        verbose_name='периодичность рассылки'
+    )
+    is_activated = models.BooleanField(
+        default=True,
+        verbose_name='метка активности'
+    )
 
     def __str__(self):
         return f'Рассылка_{self.pk}: {self.frequency} - {self.status}'
