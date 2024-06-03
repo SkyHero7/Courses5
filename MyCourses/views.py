@@ -1,78 +1,43 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Mailing
 from .forms import MailingForm
 
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = 'index.html'
 
-def home(request):
-    return render(request, 'index.html')
+class MailingListView(LoginRequiredMixin, ListView):
+    model = Mailing
+    template_name = 'MyCourses/mailing_list.html'
 
+class MailingDetailView(LoginRequiredMixin, DetailView):
+    model = Mailing
+    template_name = 'MyCourses/mailing_detail.html'
 
-def mailing_list(request):
-    mailings = Mailing.objects.all()
-    return render(request, 'MyCourses/mailing_list.html', {'mailings': mailings})
+    def get_queryset(self):
+        return Mailing.objects.filter(owner=self.request.user)
 
+class MailingCreateView(LoginRequiredMixin, CreateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'MyCourses/mailing_form.html'
 
-def mailing_detail(request, pk):
-    mailing = get_object_or_404(Mailing, pk=pk)
-    if mailing.owner != request.user:
-        # Пользователь не имеет доступа к данной рассылке
-        return render(request, 'access_denied.html')
-    return render(request, 'MyCourses/mailing_detail.html', {'mailing': mailing})
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
+class MailingUpdateView(LoginRequiredMixin, UpdateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'MyCourses/mailing_form.html'
 
-def mailing_create(request):
-    if request.method == 'POST':
-        form = MailingForm(request.POST)
-        if form.is_valid():
-            mailing = form.save(commit=False)
-            mailing.owner = request.user
-            mailing.save()
-            return redirect('mailing_detail', pk=mailing.pk)
-    else:
-        form = MailingForm()
-    return render(request, 'MyCourses/mailing_form.html', {'form': form})
+    def get_queryset(self):
+        return Mailing.objects.filter(owner=self.request.user)
 
+class MailingDeleteView(LoginRequiredMixin, DeleteView):
+    model = Mailing
+    template_name = 'MyCourses/mailing_confirm_delete.html'
+    success_url = '/mailings/'
 
-def mailing_update(request, pk):
-    mailing = get_object_or_404(Mailing, pk=pk)
-    if mailing.owner != request.user:
-        # Пользователь не имеет доступа к редактированию данной рассылки
-        return render(request, 'access_denied.html')
-
-    if request.method == 'POST':
-        form = MailingForm(request.POST, instance=mailing)
-        if form.is_valid():
-            form.save()
-            return redirect('mailing_detail', pk=mailing.pk)
-    else:
-        form = MailingForm(instance=mailing)
-    return render(request, 'MyCourses/mailing_form.html', {'form': form})
-
-
-def mailing_delete(request, pk):
-    mailing = get_object_or_404(Mailing, pk=pk)
-    if mailing.owner != request.user:
-        # Пользователь не имеет доступа к удалению данной рассылки
-        return render(request, 'access_denied.html')
-
-    if request.method == 'POST':
-        mailing.delete()
-        return redirect('mailing_list')
-    return render(request, 'MyCourses/mailing_confirm_delete.html', {'mailing': mailing})
-
-
-def edit_mailing(request, pk):
-    mailing = get_object_or_404(Mailing, pk=pk)
-    if mailing.owner != request.user:
-        # Пользователь не имеет доступа к редактированию данной рассылки
-        return render(request, 'access_denied.html')
-
-    if request.method == 'POST':
-        form = MailingForm(request.POST, instance=mailing)
-        if form.is_valid():
-            form.save()
-            return redirect('mailing_detail', pk=mailing.pk)
-    else:
-        form = MailingForm(instance=mailing)
-    return render(request, 'MyCourses/mailing_edit.html', {'form': form})
-
+    def get_queryset(self):
+        return Mailing.objects.filter(owner=self.request.user)
